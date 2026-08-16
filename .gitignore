@@ -3,5 +3,7 @@ __pycache__/
 .pytest_cache/
 figures/*.png
 !figures/headline.png
+!figures/loss.png
+!figures/fourier.png
 runs/local/
 .venv/

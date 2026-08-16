@@ -1,0 +1,17 @@
+name: ci
+
+on: [push]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      # the tiny preset doubles as the end-to-end check: data, model, and
+      # training all execute, in seconds, on the free runner's cpu
+      - run: pytest -q
+      - run: python grok.py --preset tiny --out runs/ci

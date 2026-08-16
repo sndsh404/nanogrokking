@@ -1,0 +1,32 @@
+# What each preset costs, measured on real hardware. No estimates.
+#
+# Machine: Intel Core 5 120U (low-power laptop cpu), 16 GB RAM, no GPU,
+# Windows 11, torch 2.10.0+cpu. Your numbers will differ; these are a floor
+# from genuinely modest hardware.
+
+presets:
+  tiny:
+    p: 7
+    params: 8896
+    steps: 30
+    measured_runtime_seconds: 1
+    peak_memory_mb: 200
+    purpose: "ci smoke test; proves the code runs, does not need to grok"
+
+  fast:
+    p: 53
+    params: 121728
+    steps: 6000
+    measured_runtime_seconds: 284
+    peak_memory_mb: 225
+    purpose: "the default experience; full grokking curve in under 5 minutes"
+    notes: "memorizes by step ~200, generalizes around step ~4000"
+
+  paper:
+    p: 113
+    params: 226816
+    steps: 40000
+    measured_runtime_seconds: null  # filled in when the run on this machine completes
+    peak_memory_mb: 456
+    purpose: "the exact configuration from arXiv:2301.05217 section 3"
+    notes: "this is an overnight-class run on a weak cpu; the committed log in runs/paper/ is the precomputed artifact"
