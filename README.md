@@ -14,6 +14,24 @@ python plot.py --run runs/fast
 
 That is the whole thing. About five minutes later you have the figure above, produced on your own machine. If you do not want to train anything, `runs/fast/log.csv` is committed, so `python plot.py --run runs/fast` works on a fresh clone in seconds.
 
+## why this exists
+
+I made this because I wanted to understand how neural networks actually learn, and I do not have a good laptop. This repo was built on a school laptop with no GPU, because that is what I have access to right now.
+
+Most of the celebrated work in deep learning quietly assumes hardware that many people do not have. The famous training runs want a GPU. The beautiful visual explanations cannot be run or changed. The research papers assume you already have both the compute and the context. If you are a student with a weak machine and real curiosity, the door to this field can look closed from the outside.
+
+It is not closed. Some of the most important phenomena in modern deep learning fit in a few hundred megabytes of memory and a few minutes of cpu time, if someone takes the care to shrink them honestly. Grokking is one of them, and it is not a toy result. It is an ICLR 2023 paper, one of the most surprising training phenomena ever documented, and you can watch it happen on the same kind of laptop I have.
+
+So that is the deal this repo makes with you: a real research result, reproduced faithfully, with every cost measured and published, on hardware weaker than whatever you are probably reading this on. If you have a cheap laptop and an hour of curiosity, this is for you.
+
+## the standards this repo follows
+
+- **Everything is measured, nothing is estimated.** Every runtime and memory number comes from a real run on the reference machine described in the next section. `budget.yaml` is the machine-readable record.
+- **Everything is deterministic.** Same seed, same curve. The tests verify this.
+- **The code is written to be read.** One main file, comments that explain why rather than what, hyperparameters visible at the top. Start at `grok.py` and read top to bottom.
+- **Nothing is copied.** The implementation was written from the papers' mathematical descriptions. Every source studied is credited in `REFERENCES.md`.
+- **Tests check the things that make the plot trustworthy.** That the dataset has exactly p squared pairs, that the labels are correct, that the split never leaks.
+
 ## what it costs
 
 Every number in this table was measured by actually running the code, not estimated. The reference machine is deliberately modest, because that is the point of the repo:
