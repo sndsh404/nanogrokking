@@ -18,7 +18,7 @@ presets:
     params: 121728
     steps: 6000
     measured_runtime_seconds: 284
-    peak_memory_mb: 225
+    peak_memory_mb: 325
     purpose: "the default experience; full grokking curve in under 5 minutes"
     notes: "memorizes by step ~200, generalizes around step ~4000"
 

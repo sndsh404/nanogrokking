@@ -16,7 +16,15 @@ That is the whole thing. About five minutes later you have the figure above, pro
 
 ## what it costs
 
-Every number measured on an Intel Core 5 120U laptop with no GPU. See `budget.yaml` for the machine-readable version.
+Every number in this table was measured by actually running the code, not estimated. The reference machine is deliberately modest, because that is the point of the repo:
+
+- **cpu:** Intel Core 5 120U (a low-power laptop chip, 12 threads)
+- **ram:** 16 GB
+- **gpu:** none. everything runs on cpu
+- **os / stack:** Windows 11, Python 3.14, torch 2.10.0+cpu
+- **peak memory:** the largest preset uses about 460 MB, so any machine that can open a browser can run this
+
+If your laptop is newer than this one, every preset will be faster than the numbers below. See `budget.yaml` for the machine-readable version.
 
 | preset | p | params | steps | runtime | what it is for |
 |---|---|---|---|---|---|
