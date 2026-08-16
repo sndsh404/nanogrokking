@@ -26,7 +26,7 @@ presets:
     p: 113
     params: 226816
     steps: 40000
-    measured_runtime_seconds: null  # filled in when the run on this machine completes
-    peak_memory_mb: 456
+    measured_runtime_seconds: 12446
+    peak_memory_mb: 458
     purpose: "the exact configuration from arXiv:2301.05217 section 3"
     notes: "this is an overnight-class run on a weak cpu; the committed log in runs/paper/ is the precomputed artifact"

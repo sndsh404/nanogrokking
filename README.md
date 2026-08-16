@@ -12,7 +12,7 @@ python grok.py --preset fast
 python plot.py --run runs/fast
 ```
 
-That is the whole thing. About five minutes later you have the figure above, produced on your own machine. If you do not want to train anything, `runs/fast/log.csv` is committed, so `python plot.py --run runs/fast` works on a fresh clone in seconds.
+That is the whole thing. About five minutes later you have your own copy of the figure above, produced on your machine (the figure above is the `paper` preset, the canonical configuration; the `fast` preset draws the same shape, smaller). If you do not want to train anything, both `runs/fast/log.csv` and `runs/paper/log.csv` are committed, so `python plot.py --run runs/paper` works on a fresh clone in seconds.
 
 ## why this exists
 
@@ -48,13 +48,13 @@ If your laptop is newer than this one, every preset will be faster than the numb
 |---|---|---|---|---|---|
 | `tiny` | 7 | 8,896 | 30 | ~1 s | ci smoke test |
 | `fast` | 53 | 121,728 | 6,000 | 4 min 44 s | the default run, full grokking curve |
-| `paper` | 113 | 226,816 | 40,000 | see budget.yaml | the exact setup from the paper |
+| `paper` | 113 | 226,816 | 40,000 | 3 h 27 min | the exact setup from the paper |
 
 ## what you are looking at
 
-The task is addition modulo a prime p. There are exactly p squared possible questions, so the dataset is finite and small. The model sees 45 percent of the questions and is tested on the rest.
+The task is addition modulo a prime p. There are exactly p squared possible questions, so the dataset is finite and small. In the canonical run above, the model sees 30 percent of the questions and is tested on the rest.
 
-The blue curve is accuracy on questions the model trains on. It hits 100 percent almost immediately, by step 200 or so. The orange curve is accuracy on questions the model has never seen. It stays near chance for thousands of steps. Then, around step 4000, it climbs to near 100 percent in a few hundred steps.
+The blue curve is accuracy on questions the model trains on. It hits 100 percent almost immediately, within a few hundred steps. The orange curve is accuracy on questions the model has never seen. It stays near chance for thousands of steps. Then, around step 7000, it climbs to near 100 percent in a few hundred steps.
 
 For most of training, the model is a lookup table. It has memorized every training answer and knows nothing about addition. Then, late and suddenly, it stops being a lookup table. Something inside it changes while both curves look flat. That is the interesting part: generalization was not absent during the flat stretch, it was assembling.
 
@@ -66,7 +66,7 @@ The weight decay setting is what forces this. With weight decay 1.0, every param
 
 The paper's central finding is that the transformer does not learn addition the way a person does. It learns to convert addition into rotation.
 
-Take the embedding matrix and apply a discrete Fourier transform over the token index. After grokking, almost all the weight lives on a handful of frequencies, four of them in the run above. The model embeds each number as a point on a circle, rotates by the second number, and reads off where it landed, using sines and cosines and the trigonometric identities for a sum of angles. Nobody programmed this. Gradient descent found trigonometry because trigonometry is the low-weight solution to modular addition.
+Take the embedding matrix and apply a discrete Fourier transform over the token index. After grokking, almost all the weight lives on a handful of frequencies, about five of them in the run above (the paper found five as well; which frequencies get chosen varies with the seed). The model embeds each number as a point on a circle, rotates by the second number, and reads off where it landed, using sines and cosines and the trigonometric identities for a sum of angles. Nobody programmed this. Gradient descent found trigonometry because trigonometry is the low-weight solution to modular addition.
 
 This is why grokking matters beyond a party trick. It is the cleanest example we have of a network holding two different algorithms at once, and of interpretability tools being able to watch one replace the other.
 
