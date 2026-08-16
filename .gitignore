@@ -5,6 +5,9 @@ figures/*.png
 !figures/headline.png
 !figures/loss.png
 !figures/fourier.png
+!figures/wd0.png
+!figures/evolution.png
+!figures/fraction.png
 runs/local/
 .venv/
 figures/v1/

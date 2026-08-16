@@ -5,6 +5,8 @@ on: [push]
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      OMP_NUM_THREADS: "10"  # thread count is pinned everywhere; it changes BLAS reduction order
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -12,6 +14,11 @@ jobs:
           python-version: "3.12"
       - run: pip install -r requirements.txt
       # the tiny preset doubles as the end-to-end check: data, model, and
-      # training all execute, in seconds, on the free runner's cpu
+      # training all execute, in seconds, on the free runner's cpu. the real
+      # claims are checked against the committed runs (fast and fast-wd0),
+      # since the paper preset takes over three hours and is never re-trained
       - run: pytest -q
-      - run: python grok.py --preset tiny --out runs/ci
+      # print the machine and time the tiny run, so budget.yaml gets a second
+      # machine's measurement for free on every push
+      - run: uname -a && python -c "import torch, platform; print(platform.python_version(), torch.__version__, torch.get_num_threads(), 'threads')"
+      - run: time python grok.py --preset tiny --out runs/ci

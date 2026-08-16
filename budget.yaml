@@ -1,8 +1,21 @@
 # What each preset costs, measured on real hardware. No estimates.
 #
-# Machine: Intel Core 5 120U (low-power laptop cpu), 16 GB RAM, no GPU,
-# Windows 11, torch 2.10.0+cpu. Your numbers will differ; these are a floor
-# from genuinely modest hardware.
+# Two machines are tracked. All preset numbers below are from the Windows
+# laptop; your numbers will differ, and these are a floor from genuinely
+# modest hardware.
+
+machines:
+  windows_laptop:
+    cpu: "Intel Core 5 120U (low-power laptop cpu, 12 threads)"
+    ram: "16 GB"
+    gpu: none
+    stack: "Windows 11, Python 3.14, torch 2.10.0+cpu"
+    note: "every measured_runtime_seconds and peak_memory_mb below is from this machine"
+  github_ci_ubuntu:
+    machine: "GitHub Actions ubuntu-latest runner"
+    stack: "Ubuntu, Python 3.12, torch 2.10.0+cpu"
+    tiny_measured_runtime_seconds: "printed by the ci workflow's `time` step on every push; copy the latest value here"
+    note: "CI runs the tiny preset and the test suite only; fast and paper are never re-trained in CI"
 
 presets:
   tiny:
@@ -20,7 +33,7 @@ presets:
     measured_runtime_seconds: 284
     peak_memory_mb: 325
     purpose: "the default experience; full grokking curve in under 5 minutes"
-    notes: "memorizes by step ~200, generalizes around step ~4000"
+    notes: "memorizes by step 150, generalizes at step 3150"
 
   paper:
     p: 113

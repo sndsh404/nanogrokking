@@ -167,7 +167,18 @@ def evaluate(model, x, y):
     return loss, acc
 
 
-def train(cfg, out_dir):
+def param_norm(model):
+    """Total L2 norm of every parameter, in float64.
+
+    The norm trace is the evidence for why grokking happens: weight decay
+    shrinks the whole vector every step, so the winning solution is the one
+    that buys its accuracy with the least total weight. WHY.md derives this.
+    """
+    with torch.no_grad():
+        return math.sqrt(sum(p.double().pow(2).sum().item() for p in model.parameters()))
+
+
+def train(cfg, out_dir, snap_steps=()):
     # seed everything: same seed, same run. the paper's own code seeds the data
     # split but not the model init; here both are fixed so curves are comparable
     random.seed(cfg.seed)
@@ -191,20 +202,26 @@ def train(cfg, out_dir):
 
     os.makedirs(out_dir, exist_ok=True)
     log_path = os.path.join(out_dir, "log.csv")
+    # only the embedding is snapshotted, not the whole model: the
+    # spectrum-over-time figure needs nothing else, and a full checkpoint per
+    # snapshot would quadruple the run's size on disk
+    snaps = {}
     t0 = time.time()
     with open(log_path, "w", newline="") as f:
         writer = csv.writer(f)
-        writer.writerow(["step", "train_loss", "train_acc", "val_loss", "val_acc"])
+        writer.writerow(["step", "train_loss", "train_acc", "val_loss", "val_acc", "param_norm"])
         for step in range(cfg.steps + 1):
             if step % cfg.log_every == 0 or step == cfg.steps:
                 train_loss, train_acc = evaluate(model, train_x, train_y)
                 val_loss, val_acc = evaluate(model, val_x, val_y)
-                writer.writerow([step, train_loss, train_acc, val_loss, val_acc])
+                writer.writerow([step, train_loss, train_acc, val_loss, val_acc, param_norm(model)])
                 f.flush()  # keep the log live so long runs can be watched as they go
                 if step % (cfg.log_every * 10) == 0:
                     print(f"step {step:6d}  train loss {train_loss:.4f}  acc {train_acc:.3f}"
                           f"  |  val loss {val_loss:.4f}  acc {val_acc:.3f}"
                           f"  |  {time.time() - t0:.0f}s")
+            if step in snap_steps:
+                snaps[step] = model.embed.weight.detach().cpu().clone()
             if step == cfg.steps:
                 break
             opt.zero_grad()
@@ -215,6 +232,11 @@ def train(cfg, out_dir):
 
     torch.save({"config": asdict(cfg), "state_dict": model.state_dict()},
                os.path.join(out_dir, "model.pt"))
+    if snaps:
+        steps = sorted(snaps)
+        torch.save({"config": asdict(cfg), "steps": steps,
+                    "embed": torch.stack([snaps[s] for s in steps])},
+                   os.path.join(out_dir, "snapshots.pt"))
     print(f"done in {time.time() - t0:.0f}s, {n_params} params, log at {log_path}")
     return log_path
 
@@ -226,6 +248,9 @@ def main():
     ap.add_argument("--seed", type=int, default=None, help="override the preset's seed")
     ap.add_argument("--frac-train", type=float, default=None, help="override the train fraction")
     ap.add_argument("--wd", type=float, default=None, help="override the weight decay")
+    ap.add_argument("--snap-steps", default=None,
+                    help="comma-separated steps to save embedding snapshots at, "
+                         "for the spectrum-over-time figure (e.g. 0,1000,2000,6000)")
     ap.add_argument("--out", default=None, help="output directory, default runs/<preset>")
     args = ap.parse_args()
 
@@ -238,7 +263,8 @@ def main():
         cfg.frac_train = args.frac_train
     if args.wd is not None:
         cfg.weight_decay = args.wd
-    train(cfg, args.out or os.path.join("runs", args.preset))
+    snap_steps = tuple(int(s) for s in args.snap_steps.split(",")) if args.snap_steps else ()
+    train(cfg, args.out or os.path.join("runs", args.preset), snap_steps=snap_steps)
 
 
 if __name__ == "__main__":
