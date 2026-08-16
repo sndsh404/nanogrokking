@@ -193,6 +193,7 @@ def train(cfg, out_dir):
                 train_loss, train_acc = evaluate(model, train_x, train_y)
                 val_loss, val_acc = evaluate(model, val_x, val_y)
                 writer.writerow([step, train_loss, train_acc, val_loss, val_acc])
+                f.flush()  # keep the log live so long runs can be watched as they go
                 if step % (cfg.log_every * 10) == 0:
                     print(f"step {step:6d}  train loss {train_loss:.4f}  acc {train_acc:.3f}"
                           f"  |  val loss {val_loss:.4f}  acc {val_acc:.3f}"
