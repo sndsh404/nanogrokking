@@ -1,6 +1,6 @@
 # nanogrokking
 
-A one-layer transformer learns modular addition, memorizes the training set, sits at chance on held-out pairs for thousands of steps, and then suddenly generalizes. That delayed jump is called grokking. This repo reproduces it from the original paper, small enough to run on a weak laptop with no GPU.
+A one-layer transformer learns modular addition, memorizes the training set, stays at chance on held-out pairs for thousands of steps, and then suddenly generalizes. That delayed jump is called grokking. This repo reproduces it from the original paper, small enough to run on a weak laptop with no GPU.
 
 ![train and validation accuracy: memorization first, generalization thousands of steps later](figures/headline.png)
 
@@ -12,37 +12,35 @@ python grok.py --preset fast
 python plot.py --run runs/fast
 ```
 
-That is the whole thing. About five minutes later you have your own copy of the figure above, produced on your machine (the figure above is the `paper` preset, the canonical configuration; the `fast` preset draws the same shape, smaller). If you do not want to train anything, both `runs/fast/log.csv` and `runs/paper/log.csv` are committed, so `python plot.py --run runs/paper` works on a fresh clone in seconds.
+Five minutes later you have your own copy of the figure above, from your own machine. The figure above is the `paper` preset, the canonical configuration; the `fast` preset draws the same shape, smaller. If you do not want to train anything, both run logs are committed, so `python plot.py --run runs/paper` works on a fresh clone in seconds.
 
 ## why this exists
 
-I made this because I wanted to understand how neural networks actually learn, and I do not have a good laptop. This repo was built on a school laptop with no GPU, because that is what I have access to right now.
+I am a student, and my laptop is a school laptop with no GPU. I wanted to learn how neural networks actually learn, and almost everything I found assumed hardware I did not have. The training runs wanted a GPU. The polished explanations were read-only. The papers were written for people who already had the compute and the context.
 
-Most of the celebrated work in deep learning quietly assumes hardware that many people do not have. The famous training runs want a GPU. The beautiful visual explanations cannot be run or changed. The research papers assume you already have both the compute and the context. If you are a student with a weak machine and real curiosity, the door to this field can look closed from the outside.
+The hardware barrier is mostly in how the code is written, not in the science. Grokking is a result from an ICLR 2023 paper, and the whole experiment fits in half a gigabyte of memory. The jump in the plot happens in five minutes at the smaller preset, or overnight at the canonical one. Nothing about the science needed the GPU. Only the defaults did.
 
-It is not closed. Some of the most important phenomena in modern deep learning fit in a few hundred megabytes of memory and a few minutes of cpu time, if someone takes the care to shrink them honestly. Grokking is one of them, and it is not a toy result. It is an ICLR 2023 paper, one of the most surprising training phenomena ever documented, and you can watch it happen on the same kind of laptop I have.
-
-So that is the deal this repo makes with you: a real research result, reproduced faithfully, with every cost measured and published, on hardware weaker than whatever you are probably reading this on. If you have a cheap laptop and an hour of curiosity, this is for you.
+So I built the version I wanted to find: the paper reproduced exactly, every cost measured and printed, on the laptop I actually have. If yours is anything like mine, everything here runs on it, probably faster than the numbers below.
 
 ## the standards this repo follows
 
-- **Everything is measured, nothing is estimated.** Every runtime and memory number comes from a real run on the reference machine described in the next section. `budget.yaml` is the machine-readable record.
-- **Everything is deterministic.** Same seed, same curve. The tests verify this.
-- **The code is written to be read.** One main file, comments that explain why rather than what, hyperparameters visible at the top. Start at `grok.py` and read top to bottom.
-- **Nothing is copied.** The implementation was written from the papers' mathematical descriptions. Every source studied is credited in `REFERENCES.md`.
-- **Tests check the things that make the plot trustworthy.** That the dataset has exactly p squared pairs, that the labels are correct, that the split never leaks.
+- Every runtime and memory number is measured on the reference machine, not estimated. `budget.yaml` is the record.
+- Same seed, same curve. One of the tests trains twice and diffs the logs.
+- The code is written to be read: one main file, comments that explain why, hyperparameters at the top. Start at `grok.py`.
+- No copied code. The implementation comes from the papers' mathematical descriptions, and every source studied is credited in `REFERENCES.md`.
+- The tests guard the things that make the plot trustworthy: exactly p squared pairs, correct labels, no leakage between train and validation.
 
 ## what it costs
 
-Every number in this table was measured by actually running the code, not estimated. The reference machine is deliberately modest, because that is the point of the repo:
+Measured by running the code, on a deliberately modest machine:
 
 - **cpu:** Intel Core 5 120U (a low-power laptop chip, 12 threads)
 - **ram:** 16 GB
 - **gpu:** none. everything runs on cpu
 - **os / stack:** Windows 11, Python 3.14, torch 2.10.0+cpu
-- **peak memory:** the largest preset uses about 460 MB, so any machine that can open a browser can run this
+- **peak memory:** about 460 MB at the largest preset
 
-If your laptop is newer than this one, every preset will be faster than the numbers below. See `budget.yaml` for the machine-readable version.
+If your laptop is newer than this one, your numbers will be better than these. `budget.yaml` has the machine-readable version.
 
 | preset | p | params | steps | runtime | what it is for |
 |---|---|---|---|---|---|
@@ -52,23 +50,23 @@ If your laptop is newer than this one, every preset will be faster than the numb
 
 ## what you are looking at
 
-The task is addition modulo a prime p. There are exactly p squared possible questions, so the dataset is finite and small. In the canonical run above, the model sees 30 percent of the questions and is tested on the rest.
+The task is addition modulo a prime p. There are exactly p squared possible questions, so the dataset is finite. In the canonical run above, the model trains on 30 percent of the questions and is tested on the rest.
 
-The blue curve is accuracy on questions the model trains on. It hits 100 percent almost immediately, within a few hundred steps. The orange curve is accuracy on questions the model has never seen. It stays near chance for thousands of steps. Then, around step 7000, it climbs to near 100 percent in a few hundred steps.
+The blue curve is accuracy on training questions. It hits 100 percent within a few hundred steps. The orange curve is accuracy on questions the model has never seen. It stays near chance for thousands of steps, then around step 7000 it climbs to near 100 percent in a few hundred steps.
 
-For most of training, the model is a lookup table. It has memorized every training answer and knows nothing about addition. Then, late and suddenly, it stops being a lookup table. Something inside it changes while both curves look flat. That is the interesting part: generalization was not absent during the flat stretch, it was assembling.
+For most of training the model is a lookup table. It has memorized every training answer and knows nothing about addition. Then, late and quickly, it stops being one. The generalizing circuit was being built during the whole flat stretch; the accuracy could not show it yet.
 
-The weight decay setting is what forces this. With weight decay 1.0, every parameter is constantly pulled toward zero. A memorized lookup table needs large, specific weights to survive that pull. A general mechanism needs less total weight to do the same job, so once the pieces of it exist, the pull toward zero erases the memorized solution first and the mechanism wins. Set `--wd 0` and the model memorizes forever and never groks.
+Weight decay is what causes this change. With weight decay 1.0, every parameter is constantly made a little smaller. A memorized table needs large, specific weights to survive that shrinkage. A general mechanism needs less total weight for the same job, so the memorized solution is removed first. Set `--wd 0` and the model memorizes forever and never groks.
 
 ## the fourier plot, or what the model actually learned
 
 ![the learned embedding concentrates on a handful of frequencies](figures/fourier.png)
 
-The paper's central finding is that the transformer does not learn addition the way a person does. It learns to convert addition into rotation.
+The paper's central finding is that the transformer does not learn addition the way a person does. It learns to do addition as rotation.
 
-Take the embedding matrix and apply a discrete Fourier transform over the token index. After grokking, almost all the weight lives on a handful of frequencies, about five of them in the run above (the paper found five as well; which frequencies get chosen varies with the seed). The model embeds each number as a point on a circle, rotates by the second number, and reads off where it landed, using sines and cosines and the trigonometric identities for a sum of angles. Nobody programmed this. Gradient descent found trigonometry because trigonometry is the low-weight solution to modular addition.
+Apply a discrete Fourier transform to the embedding matrix over the token index. After grokking, almost all the weight lives on a handful of frequencies, about five in the run above (the paper found five as well; which ones get picked depends on the seed). The model embeds each number as a point on a circle, rotates by the second number, and reads off the answer, using sines, cosines, and the trigonometric identities for a sum of angles. Nobody programmed this. Gradient descent found trigonometry because it is the low-weight solution to modular addition.
 
-This is why grokking matters beyond a party trick. It is the cleanest example we have of a network holding two different algorithms at once, and of interpretability tools being able to watch one replace the other.
+That is also why grokking matters beyond the curve. During training the network holds two different algorithms at once, and with an analysis like the one above you can watch one replace the other.
 
 ## things to try
 
