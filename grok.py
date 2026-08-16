@@ -175,7 +175,11 @@ def train(cfg, out_dir):
     torch.manual_seed(cfg.seed)
 
     (train_x, train_y), (val_x, val_y) = make_data(cfg)
-    model = Model(cfg)
+    # use a gpu if one happens to be there, but never require one. cpu is the
+    # reference platform; every published number in budget.yaml is from a cpu
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    train_x, train_y, val_x, val_y = (t.to(device) for t in (train_x, train_y, val_x, val_y))
+    model = Model(cfg).to(device)
     n_params = sum(p.numel() for p in model.parameters())
 
     # weight decay applies to every parameter, as in the paper. it is the
