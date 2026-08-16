@@ -7,3 +7,5 @@ figures/*.png
 !figures/fourier.png
 runs/local/
 .venv/
+figures/v1/
+runs/paper/
