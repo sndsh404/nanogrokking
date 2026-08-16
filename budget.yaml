@@ -12,10 +12,10 @@ machines:
     stack: "Windows 11, Python 3.14, torch 2.10.0+cpu"
     note: "every measured_runtime_seconds and peak_memory_mb below is from this machine"
   github_ci_ubuntu:
-    machine: "GitHub Actions ubuntu-latest runner"
-    stack: "Ubuntu, Python 3.12, torch 2.10.0+cpu"
-    tiny_measured_runtime_seconds: "printed by the ci workflow's `time` step on every push; copy the latest value here"
-    note: "CI runs the tiny preset and the test suite only; fast and paper are never re-trained in CI"
+    machine: "GitHub Actions ubuntu-latest runner (2 cpu threads per torch)"
+    stack: "Ubuntu, Python 3.12, torch 2.10.0"
+    tiny_measured_runtime_seconds: 2.6
+    note: "measured by the ci workflow's `time` step on push ed25814; CI runs the tiny preset and the test suite only, fast and paper are never re-trained in CI"
 
 presets:
   tiny:
