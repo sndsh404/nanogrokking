@@ -49,8 +49,11 @@ class Config:
 PRESETS = {
     # the canonical configuration from section 3 of the paper
     "paper": Config(),
-    # small modulus and budget, tuned so grokking still appears on a weak cpu
-    "fast": Config(p=53, d_model=96, n_head=3, d_mlp=384, steps=8000, log_every=50),
+    # small modulus and budget, tuned on cpu so grokking still appears in a
+    # few minutes. the lever that mattered was the train fraction: at 0.45 the
+    # model memorizes by step ~200 and generalizes around step 4000. raising
+    # weight decay instead made the transition slower, not faster
+    "fast": Config(p=53, d_model=96, n_head=3, d_mlp=384, frac_train=0.45, steps=6000, log_every=50),
     # ci smoke test: proves the code runs and the loss moves, nothing more
     "tiny": Config(p=7, d_model=32, n_head=2, d_mlp=64, steps=30, log_every=10),
 }
@@ -217,6 +220,8 @@ def main():
     ap.add_argument("--preset", choices=PRESETS, default="fast")
     ap.add_argument("--steps", type=int, default=None, help="override the preset's step count")
     ap.add_argument("--seed", type=int, default=None, help="override the preset's seed")
+    ap.add_argument("--frac-train", type=float, default=None, help="override the train fraction")
+    ap.add_argument("--wd", type=float, default=None, help="override the weight decay")
     ap.add_argument("--out", default=None, help="output directory, default runs/<preset>")
     args = ap.parse_args()
 
@@ -225,6 +230,10 @@ def main():
         cfg.steps = args.steps
     if args.seed is not None:
         cfg.seed = args.seed
+    if args.frac_train is not None:
+        cfg.frac_train = args.frac_train
+    if args.wd is not None:
+        cfg.weight_decay = args.wd
     train(cfg, args.out or os.path.join("runs", args.preset))
 
 
